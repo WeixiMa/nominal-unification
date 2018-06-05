@@ -106,7 +106,7 @@ data _⊢_⇒ν_ : Subst' → pν → Subst' → Set where
         → σ₀ ⊢ ((inj₂ (a₁ , Φ₁ , x₂ , Φ₂)) ∷ p) ⇒ν σ₁
 
 data Cut : pδ → Var → (pδ × pδ) → Set where
-  ε : ∀ {x} → Cut [] x ([] , [])
+  ε    : ∀ {x} → Cut [] x ([] , [])
   this : ∀ {x x₁ Φ₁ x₂ Φ₂ δ δ-with-x δ-without-x}
          → x ≡ x₁
          → Cut δ x (δ-with-x , δ-without-x)
@@ -119,7 +119,7 @@ data Cut : pδ → Var → (pδ × pδ) → Set where
                ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-without-x , δ-without-x)
  
 data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → Set where
-  ε : ∀ {σ xs} → (σ , xs) ⊢ [] ⇒pull (σ , xs)
+  ε  : ∀ {σ xs} → (σ , xs) ⊢ [] ⇒pull (σ , xs)
   NN : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ p σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Present' σ₀ x₂ a₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
@@ -132,8 +132,8 @@ data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → S
        → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ p) ⇒pull (σ₁ , xs₁)
 
 data _⊢_⇒δ_ : (Subst' × pδ) → List Var → (Subst' × pδ) → Set where
-  εxs : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)
-  εδ : ∀ {σ xs} → (σ , []) ⊢ xs ⇒δ (σ , [])
+  εxs  : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)
+  εδ   : ∀ {σ xs} → (σ , []) ⊢ xs ⇒δ (σ , [])
   pull : ∀ {σ₀ δ₀ x xs σ₀' δ₀' pδ-of-x xs' σ₁ δ₁}
          → Cut δ₀ x (δ₀' , pδ-of-x)
          → (σ₀ , xs) ⊢ pδ-of-x ⇒pull (σ₀' , xs')
@@ -204,23 +204,21 @@ postulate
   -- complaining that f x is not convertible with g x.
   ⊥-funext : ∀{α} {A : Set α} → (f g : (x : A) → ⊥) → f ≡ g
 
--- axioms
 uniq-free : ∀ {Φ a} → (x : Fr Φ a) → (y : Fr Φ a) → x ≡ y
-uniq-free ε ε = refl
+uniq-free ε ε                                 = refl
 uniq-free (s x1 p1) (s x2 p2) with uniq-free p1 p2 | ⊥-funext x1 x2
 uniq-free (s x1 p1) (s .x1 .p1) | refl | refl = refl
 
 uniq-bound : ∀ {Φ a i i'} → (x : Bd Φ a i) → (y : Bd Φ a i')
-           → Σ (i ≡ i') (λ ieq → (subst (λ k → Bd Φ a k) ieq) x ≡ y)
+             → Σ (i ≡ i') (λ ieq → (subst (λ k → Bd Φ a k) ieq) x ≡ y)
 uniq-bound (b x) (b x') with x | x'
 uniq-bound (b x) (b x') | refl | refl = refl , refl
-uniq-bound (b x) (s nope y) = ⊥-elim (nope x)
-uniq-bound (s nope x₁) (b x) = ⊥-elim (nope x)
+uniq-bound (b x) (s nope y)                             = ⊥-elim (nope x)
+uniq-bound (s nope x₁) (b x)                            = ⊥-elim (nope x)
 uniq-bound (s nope x) (s nope' y) with ⊥-funext nope nope'
 uniq-bound (s nope x) (s .nope y) | refl with uniq-bound x y
 uniq-bound (s nope x) (s .nope .x) | refl | refl , refl = refl , refl
 
--- lemmas
 free-bound-dec : ∀ {Φ a i} → Bd Φ a i → Fr Φ a → ⊥
 free-bound-dec {[]} {a} () fr
 free-bound-dec {a' ∷ Φ} {a} bd fr with a Nat.≟ a'
