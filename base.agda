@@ -198,7 +198,21 @@ data _⊢_⇒ρ_ : (pν × pδ × Subst) → List (Term × Scope × Term × Scop
 
 --axioms
 postulate
-  free-bound-dec : ∀ {Φ a i} → Bd Φ a i → Fr Φ a → ⊥
+  -- free-bound-dec : ∀ {Φ a i} → Bd Φ a i → Fr Φ a → ⊥
   uniq-free : ∀ {Φ a} → (x : Fr Φ a) → (y : Fr Φ a) → x ≡ y
   uniq-bound : ∀ {Φ a i i'} → (x : Bd Φ a i) → (y : Bd Φ a i')
                → Σ (i ≡ i') (λ ieq → (subst (λ k → Bd Φ a k) ieq) x ≡ y)
+
+-- lemmas
+free-bound-dec : ∀ {Φ a i} → Bd Φ a i → Fr Φ a → ⊥
+free-bound-dec {[]} {a} () fr
+free-bound-dec {a' ∷ Φ} {a} bd fr with a Nat.≟ a'
+free-bound-dec {a' ∷ Φ} {.a'} (b _) (s ¬eq _) | yes refl
+  = ¬eq refl
+free-bound-dec {a' ∷ Φ} {.a'} (s ¬eq _) (s _ _) | yes refl
+  = ¬eq refl
+free-bound-dec {a' ∷ Φ} {a} (b p) fr | no ¬p
+  = ¬p p
+free-bound-dec {a' ∷ Φ} {a} (s _ bd) (s _ fr) | no ¬p
+  = free-bound-dec bd fr
+
