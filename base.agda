@@ -6,6 +6,8 @@ open import Data.Empty
 open import Relation.Nullary
 open import Relation.Binary.PropositionalEquality
 
+open import axioms
+
 Var = ℕ
 Name = ℕ
 Scope = List Name
@@ -195,14 +197,6 @@ data _⊢_⇒ρ_ : (pν × pδ × Subst) → List (Term × Scope × Term × Scop
       → (p₀ , δ₀ , σ₀) ⊢ e ⇒s (p₀' , δ₀' , σ₀')
       → (p₀' , δ₀' , σ₀') ⊢ es ⇒ρ (p₁ , δ₁ , σ₁)
       → (p₀' , δ₀' , σ₀') ⊢ (e ∷ es) ⇒ρ (p₁ , δ₁ , σ₁)
-
-
-postulate
-  -- This special case of funext is provable if there's η-rules for ⊥
-  -- and Π. But Agda doesn't seem to have definitional η for ⊥ -
-  -- otherwise, λ f g → refl would be a proof, but it fails,
-  -- complaining that f x is not convertible with g x.
-  ⊥-funext : ∀{α} {A : Set α} → (f g : (x : A) → ⊥) → f ≡ g
 
 uniq-free : ∀ {Φ a} → (x : Fr Φ a) → (y : Fr Φ a) → x ≡ y
 uniq-free ε ε                                 = refl
