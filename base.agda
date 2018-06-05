@@ -196,7 +196,7 @@ data _⊢_⇒ρ_ : (pν × pδ × Subst) → List (Term × Scope × Term × Scop
       → (p₀' , δ₀' , σ₀') ⊢ es ⇒ρ (p₁ , δ₁ , σ₁)
       → (p₀' , δ₀' , σ₀') ⊢ (e ∷ es) ⇒ρ (p₁ , δ₁ , σ₁)
 
---axioms
+-- axioms
 postulate
   -- free-bound-dec : ∀ {Φ a i} → Bd Φ a i → Fr Φ a → ⊥
   uniq-free : ∀ {Φ a} → (x : Fr Φ a) → (y : Fr Φ a) → x ≡ y
