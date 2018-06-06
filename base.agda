@@ -206,7 +206,7 @@ uniq-free (s x1 p1) (s .x1 .p1) | refl | refl = refl
 uniq-bound : ∀ {Φ a i i'} → (x : Bd Φ a i) → (y : Bd Φ a i')
              → Σ (i ≡ i') (λ ieq → (subst (λ k → Bd Φ a k) ieq) x ≡ y)
 uniq-bound (b x) (b x') with x | x'
-uniq-bound (b x) (b x') | refl | refl = refl , refl
+uniq-bound (b x) (b x') | refl | refl                   = refl , refl
 uniq-bound (b x) (s nope y)                             = ⊥-elim (nope x)
 uniq-bound (s nope x₁) (b x)                            = ⊥-elim (nope x)
 uniq-bound (s nope x) (s nope' y) with ⊥-funext nope nope'
