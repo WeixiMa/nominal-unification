@@ -60,10 +60,14 @@ postulate
 ν'extσ (NV' _ _  d) = ν'extσ d
 
 pullextσ : ∀ {σ₀ xs₀ δ σ₁ xs₁} → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁) → σ₀ ⊆ σ₁
-pullextσ d = {!!}
+pullextσ ε = ⊆refl
+pullextσ (NN _ _ _ d) = pullextσ d
+pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
 
 δextσ : ∀ {σ₀ δ₀ xs σ₁ δ₁} → (σ₀ , δ₀) ⊢ xs ⇒δ (σ₁ , δ₁) → σ₀ ⊆ σ₁
-δextσ = {!!}
+δextσ εxs = ⊆refl
+δextσ εδ = ⊆refl
+δextσ (pull _ p d) = ⊆tran (pullextσ p) (δextσ d)
 
 ν✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ a₂ Φ₂}
      → σ₀ ⊢ pν ⇒ν σ₁ → (a₁ , Φ₁ , a₂ , Φ₂) ∈ pν

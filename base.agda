@@ -143,10 +143,10 @@ data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → S
 data _⊢_⇒δ_ : (Subst' × pδ) → List Var → (Subst' × pδ) → Set where
   εxs  : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)
   εδ   : ∀ {σ xs} → (σ , []) ⊢ xs ⇒δ (σ , [])
-  pull : ∀ {σ₀ δ₀ x xs σ₀' σ₀'' δ₀' pδ-of-x xs' σ₁ δ₁}
+  pull : ∀ {σ₀ δ₀ x xs σ₀' δ₀' pδ-of-x xs' σ₁ δ₁}
          → Cut δ₀ x (δ₀' , pδ-of-x)
-         → (σ₀' , xs) ⊢ pδ-of-x ⇒pull (σ₀'' , xs')
-         → (σ₀'' , δ₀') ⊢ xs' ⇒δ (σ₁ , δ₁)
+         → (σ₀ , xs) ⊢ pδ-of-x ⇒pull (σ₀' , xs')
+         → (σ₀' , δ₀') ⊢ xs' ⇒δ (σ₁ , δ₁)
          → (σ₀ , δ₀) ⊢ (x ∷ xs) ⇒δ (σ₁ , δ₁)
 
 data _⊢_⇒s_ : (pν × pν' × pδ × Subst) → (Term × Scope × Term × Scope)
