@@ -137,16 +137,16 @@ data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → S
   NV : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ p σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Absent' σ₀ x₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-       → ((x₂ , a₁) ∷ σ₀ , x₂ ∷ xs₀) ⊢ p ⇒pull (σ₁ , xs₁)
+       → ((x₂ , a₂) ∷ σ₀ , x₂ ∷ xs₀) ⊢ p ⇒pull (σ₁ , xs₁)
        → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ p) ⇒pull (σ₁ , xs₁)
 
 data _⊢_⇒δ_ : (Subst' × pδ) → List Var → (Subst' × pδ) → Set where
   εxs  : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)
   εδ   : ∀ {σ xs} → (σ , []) ⊢ xs ⇒δ (σ , [])
-  pull : ∀ {σ₀ δ₀ x xs σ₀' δ₀' pδ-of-x xs' σ₁ δ₁}
+  pull : ∀ {σ₀ δ₀ x xs σ₀' σ₀'' δ₀' pδ-of-x xs' σ₁ δ₁}
          → Cut δ₀ x (δ₀' , pδ-of-x)
-         → (σ₀ , xs) ⊢ pδ-of-x ⇒pull (σ₀' , xs')
-         → (σ₀' , δ₀') ⊢ xs' ⇒δ (σ₁ , δ₁)
+         → (σ₀' , xs) ⊢ pδ-of-x ⇒pull (σ₀'' , xs')
+         → (σ₀'' , δ₀') ⊢ xs' ⇒δ (σ₁ , δ₁)
          → (σ₀ , δ₀) ⊢ (x ∷ xs) ⇒δ (σ₁ , δ₁)
 
 data _⊢_⇒s_ : (pν × pν' × pδ × Subst) → (Term × Scope × Term × Scope)
