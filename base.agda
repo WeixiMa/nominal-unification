@@ -85,6 +85,8 @@ data _∈_ : ∀ {A} → A → List A → Set where
   step : ∀ {A} {hd hd' : A} {tl : List A}
          → ¬ hd ≡ hd' → hd ∈ tl → hd ∈ (hd' ∷ tl)
 
+data _∉_ : ∀ {l} {A : Set l} → A → List A → Set where
+
 data _∼_ : (Name × Scope) → (Name × Scope) → Set where
   same-bound : ∀ {a₁ Φ₁ i₁ a₂ Φ₂ i₂}
                → i₁ ≡ i₂
@@ -118,14 +120,14 @@ data Cut : pδ → Var → (pδ × pδ) → Set where
   ε    : ∀ {x} → Cut [] x ([] , [])
   this : ∀ {x x₁ Φ₁ x₂ Φ₂ δ δ-with-x δ-without-x}
          → x ≡ x₁
-         → Cut δ x (δ-with-x , δ-without-x)
+         → Cut δ x (δ-without-x , δ-with-x)
          → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) x
-               (δ-without-x , (x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-without-x)
+               (δ-without-x , (x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-with-x)
   next : ∀ {x x₁ Φ₁ x₂ Φ₂ δ δ-with-x δ-without-x}
          → ¬ x ≡ x₁
-         → Cut δ x (δ-with-x , δ-without-x)
+         → Cut δ x (δ-without-x , δ-with-x)
          → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) x
-               ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-without-x , δ-without-x)
+               ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-without-x , δ-with-x)
  
 data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → Set where
   ε  : ∀ {σ xs} → (σ , xs) ⊢ [] ⇒pull (σ , xs)

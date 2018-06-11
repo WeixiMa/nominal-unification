@@ -21,21 +21,30 @@ data Sub : Term → Subst → Term → Set where
 
 data Subst2Queue : Subst' → List Var → Set where
 
-data _⊆_ : Subst' → Subst' → Set where
-  ε : ∀ {σ} → [] ⊆ σ
-  f : ∀ {pr σ' σ} → σ' ⊆ σ → pr ∈ σ → (pr ∷ σ') ⊆ σ
+-- data _⊆_ : Subst' → Subst' → Set where
+--   ε : ∀ {σ} → [] ⊆ σ
+--   f : ∀ {pr σ' σ} → σ' ⊆ σ → pr ∈ σ → (pr ∷ σ') ⊆ σ
+
+data _⊆_ : ∀ {A} → List A → List A → Set where
+  ε : ∀ {A} {ls : List A} → [] ⊆ ls
+  f : ∀ {A} {hd : A} {tl ls} → tl ⊆ ls → hd ∈ ls → (hd ∷ tl) ⊆ ls
 
 postulate
   _ν≟_ : Decidable {A = (Name × Scope × Name × Scope)} _≡_
+  diffHead : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
+             → ¬ x₁ ≡ x₁'
+             → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
+  diffHead' : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
+              → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
+              → ¬ x₁ ≡ x₁'
   replace : ∀ {a₁ Φ₁ a₂ Φ₂ a₁' Φ₁' a₂' Φ₂'}
           → (a₁' , Φ₁' , a₂' , Φ₂') ≡ (a₁ , Φ₁ , a₂ , Φ₂)
           → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
           → (a₁' , Φ₁') ∼ (a₂' , Φ₂')
-  inRest : ∀ {A} {hd hd' : A} {tl : List A} → ¬ hd ≡ hd' → hd ∈ (hd' ∷ tl) → hd ∈ tl
-  ⊆refl : ∀ {σ} → σ ⊆ σ
-  ⊆tran : ∀ {σ₀ σ₁ σ₂} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
-  ⊆ext : ∀ {a σ} → σ ⊆ (a ∷ σ)
-  ⊆larger : ∀ {hd σ σ'} → hd ∈ σ → σ ⊆ σ' → hd ∈ σ'
+  ⊆refl : ∀ {A} {σ : List A} → σ ⊆ σ
+  ⊆tran : ∀ {A} {σ₀ σ₁ σ₂ : List A} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
+  ⊆ext : ∀ {A} {hd : A} {σ} → σ ⊆ (hd ∷ σ)
+  ∈larger : ∀ {A} {x : A} {s s'} → x ∈ s → s ⊆ s' → x ∈ s'
   ν'≟ : ∀ (a₁ a₂ a₁' a₂' : Name) (Φ₁ Φ₂ Φ₁' Φ₂' : Scope)
        → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
        ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
@@ -45,14 +54,37 @@ postulate
                     (λ aeq → (subst (λ name → Present' σ x name) aeq p) ≡ p')
   presentLarger : ∀ {x a σ σ'} → Present' σ x a → σ ⊆ σ'
                 → Present' σ' x a
-  inCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
-          → Cut δ x (δ-without-x , δ-with-x)
-          → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → x₁ ≡ x
-          → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-with-x
-  outCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
-          → Cut δ x (δ-without-x , δ-with-x)
-          → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → ¬ x₁ ≡ x
-          → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-without-x
+         
+inRest : ∀ {A} {hd hd' : A} {tl : List A} → ¬ hd ≡ hd' → hd ∈ (hd' ∷ tl) → hd ∈ tl
+inRest nope (this eq) = ⊥-elim (nope eq)
+inRest _ (step _ i)   = i
+
+inCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
+        → Cut δ x (δ-without-x , δ-with-x)
+        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → x₁ ≡ x
+        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-with-x
+inCut ε () eq
+inCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (this {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
+  with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
+inCut {x₁'} {Φ₁} {x₂} {Φ₂} {x₁'} (this {.x₁'} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
+   | inj₁ neq = step neq (inCut c (inRest neq i) refl)
+inCut {x₁'} {Φ₁} {x₂} {Φ₂} {x₁'} (this {.x₁'} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
+   | inj₂ (_ , refl , refl , refl , refl) = this refl
+inCut {.x} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} neq c) i refl = inCut c (inRest (diffHead neq) i) refl
+
+outCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
+         → Cut δ x (δ-without-x , δ-with-x)
+         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → ¬ x₁ ≡ x
+         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-without-x
+outCut ε () neq
+outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (this {.x} {.x} {Φ₁'} {x₂'} {Φ₂'} refl c) i nope
+  = outCut c (inRest (diffHead nope) i) nope
+outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} neq' c) i nope
+  with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
+outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} neq' c) i nope
+    | inj₁ neq = step neq (outCut c (inRest neq i) nope)
+outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} neq' c) i nope
+    | inj₂ (eq , refl , refl , refl , refl) = this refl
 
 ν'extσ : ∀ {σ' σ p} → σ' ⊢ p ⇒ν' σ → σ' ⊆ σ
 ν'extσ ε = ⊆refl
@@ -119,6 +151,31 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (⊆tran ⊆ext (pullextσ d)) , presentLarger (f refl) (pullextσ d) , NN eq
 
+cutSmaller : ∀ {δ δ₀ δ₁ x} → Cut δ x (δ₀ , δ₁) → δ₀ ⊆ δ × δ₁ ⊆ δ
+cutSmaller = {!!}
+
+cutLemma : ∀ {δ x δ₀ δ₁ eqn} → Cut δ x (δ₀ , δ₁) → eqn ∈ δ₀ → eqn ∉ δ₁
+cutLemma = {!!}
+
+notin : ∀ {σ₀ xs₀ δ σ₁ xs₁ x₁ x₂ Φ₁ Φ₂}
+        → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
+        → (x₁ , Φ₁ , x₂ , Φ₂) ∉ δ → Absent' σ₀ x₁ → Absent' σ₀ x₂
+        → Absent' σ₁ x₁ × Absent' σ₁ x₂
+notin = {!!}
+
+disjoint : ∀ {σ₀ δ₀ x xs xs' σ₁ δ₁ δ₀-with-x}
+           → Cut δ₀ x (δ₁ , δ₀-with-x)
+           → (σ₀ , xs) ⊢ δ₀-with-x ⇒pull (σ₁ , xs')
+           → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀ → Absent' σ₀ x₁ × Absent' σ₀ x₂)
+           → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₁ → Absent' σ₁ x₁ × Absent' σ₁ x₂)
+disjoint c p g x₁ x₂ Φ₁ Φ₂ i
+  with cutSmaller c
+disjoint c p g x₁ x₂ Φ₁ Φ₂ i
+  | sub , _
+  with g x₁ x₂ Φ₁ Φ₂ (∈larger i sub)
+disjoint c p g x₁ x₂ Φ₁ Φ₂ i
+  | _ , _ | nfd₁ , nfd₂ = notin p (cutLemma c i) nfd₁ nfd₂ 
+
 δ✓ : ∀ {σ₀ δ₀ xs σ₁ δ₁ x₁ Φ₁ x₂ Φ₂}
      → (σ₀ , δ₀) ⊢ xs ⇒δ (σ₁ , δ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀
      → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀ → Absent' σ₀ x₁ × Absent' σ₀ x₂)
@@ -137,4 +194,4 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
 ... | a₁ , a₂ , fd₁ , fd₂ , aeq
   = inj₁ (a₁ , a₂ , presentLarger fd₁ (δextσ d) , presentLarger fd₂ (δextσ d) , aeq)
 δ✓ {x₁ = x} (pull {x = x'} {xs} c p d) i g
-   | no neq = δ✓ d (outCut c i neq) {!!}
+   | no neq = δ✓ d (outCut c i neq) (disjoint c p g)
