@@ -10,52 +10,41 @@ open import Relation.Binary.PropositionalEquality
 open import base
 open import alpha
 
-data Sub : Term → Subst → Term → Set where
-  name : ∀ {a σ} → Sub (name a) σ (name a)
-  abs  : ∀ {a t t' σ} →  Sub t σ t' → Sub (abs a t) σ (abs a t')
-  comb : ∀ {l r l' r' σ} → Sub l σ l' → Sub r σ r'
-         → Sub (comb l r) σ (comb l r)
-  var  : ∀ {x σ} → Absent σ x → Sub (var x) σ (var x)
-  var' : ∀ {x t t' σ} → Present σ x t → Sub t σ t'
-         → Sub (var x) σ t'
+-- data Sub : Term → Subst → Term → Set where
+--   name : ∀ {a σ} → Sub (name a) σ (name a)
+--   abs  : ∀ {a t t' σ} →  Sub t σ t' → Sub (abs a t) σ (abs a t')
+--   comb : ∀ {l r l' r' σ} → Sub l σ l' → Sub r σ r'
+--          → Sub (comb l r) σ (comb l r)
+--   var  : ∀ {x σ} → Absent σ x → Sub (var x) σ (var x)
+--   var' : ∀ {x t t' σ} → Present σ x t → Sub t σ t'
+--          → Sub (var x) σ t'
 
-data Subst2Queue : Subst' → List Var → Set where
-
--- data _⊆_ : Subst' → Subst' → Set where
---   ε : ∀ {σ} → [] ⊆ σ
---   f : ∀ {pr σ' σ} → σ' ⊆ σ → pr ∈ σ → (pr ∷ σ') ⊆ σ
+-- data Subst2Queue : Subst' → List Var → Set where
 
 data _⊆_ : ∀ {A} → List A → List A → Set where
   ε : ∀ {A} {ls : List A} → [] ⊆ ls
   f : ∀ {A} {hd : A} {tl ls} → tl ⊆ ls → hd ∈ ls → (hd ∷ tl) ⊆ ls
 
 postulate
-  _ν≟_ : Decidable {A = (Name × Scope × Name × Scope)} _≡_
-  diffHead : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
-             → ¬ x₁ ≡ x₁'
-             → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
-  diffHead' : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
-              → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
-              → ¬ x₁ ≡ x₁'
-  replace : ∀ {a₁ Φ₁ a₂ Φ₂ a₁' Φ₁' a₂' Φ₂'}
-          → (a₁' , Φ₁' , a₂' , Φ₂') ≡ (a₁ , Φ₁ , a₂ , Φ₂)
-          → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-          → (a₁' , Φ₁') ∼ (a₂' , Φ₂')
-  ⊆refl : ∀ {A} {σ : List A} → σ ⊆ σ
-  ⊆tran : ∀ {A} {σ₀ σ₁ σ₂ : List A} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
-  ⊆ext : ∀ {A} {hd : A} {σ} → σ ⊆ (hd ∷ σ)
-  ∈larger : ∀ {A} {x : A} {s s'} → x ∈ s → s ⊆ s' → x ∈ s'
-  ∉smaller : ∀ {A} {x : A} {s s'} → x ∉ s → s' ⊆ s → x ∉ s'
   ν'≟ : ∀ (a₁ a₂ a₁' a₂' : Name) (Φ₁ Φ₂ Φ₁' Φ₂' : Scope)
        → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
        ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
          × a₁ ≡ a₁' × Φ₁ ≡ Φ₁' × a₂ ≡ a₂' × Φ₂ ≡ Φ₂'
-  substIsFunction : ∀ {σ x a a'} → (p : Present' σ x a) → (p' : Present' σ x a')
-                  → Σ (a ≡ a')
-                    (λ aeq → (subst (λ name → Present' σ x name) aeq p) ≡ p')
+  diffHead : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
+             → ¬ x₁ ≡ x₁'
+             → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
+  replace : ∀ {a₁ Φ₁ a₂ Φ₂ a₁' Φ₁' a₂' Φ₂'}
+          → (a₁' , Φ₁' , a₂' , Φ₂') ≡ (a₁ , Φ₁ , a₂ , Φ₂)
+          → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
+          → (a₁' , Φ₁') ∼ (a₂' , Φ₂')
+  ⊆tran : ∀ {A} {σ₀ σ₁ σ₂ : List A} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
+  ⊆ext : ∀ {A} {x : A} {σ} → σ ⊆ (x ∷ σ)
+  ⊆refl : ∀ {A} {σ : List A} → σ ⊆ σ
+  ∉smaller : ∀ {A} {x : A} {s s'} → x ∉ s → s' ⊆ s → x ∉ s'
   presentLarger : ∀ {x a σ σ'} → Present' σ x a → σ ⊆ σ'
-                → Present' σ' x a
-         
+                  → Present' σ' x a
+
+
 inRest : ∀ {A} {hd hd' : A} {tl : List A} → ¬ hd ≡ hd' → hd ∈ (hd' ∷ tl) → hd ∈ tl
 inRest nope (this eq) = ⊥-elim (nope eq)
 inRest _ (step _ i)   = i
@@ -107,11 +96,11 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
      → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)
 ν✓ ε ()
 ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ _) i
-  with (a₁ , Φ₁ , a₂ , Φ₂) ν≟ (a₁' , Φ₁' , a₂' , Φ₂')
-ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} eq d) i
-   | yes p = NN (replace p eq)
+  with ν'≟ a₁ a₂ a₁' a₂' Φ₁ Φ₂ Φ₁' Φ₂'
 ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ d) i
-   | no ¬p = ν✓ d (inRest ¬p i)
+   | inj₁ neq = ν✓ d (inRest neq i)
+ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} eq d) i
+   | inj₂ (eq' , _ , _ , _ , _) = NN (replace eq' eq)
 
 ν'✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ x₂ Φ₂}
       → σ₀ ⊢ pν ⇒ν' σ₁ → (a₁ , Φ₁ , x₂ , Φ₂) ∈ pν
