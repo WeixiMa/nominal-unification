@@ -85,7 +85,10 @@ data _∈_ : ∀ {A} → A → List A → Set where
   step : ∀ {A} {hd hd' : A} {tl : List A}
          → ¬ hd ≡ hd' → hd ∈ tl → hd ∈ (hd' ∷ tl)
 
-data _∉_ : ∀ {l} {A : Set l} → A → List A → Set where
+data _∉_ : ∀ {A : Set} → A → List A → Set where
+  ε    : ∀ {A : Set} {x : A} → x ∉ []
+  step : ∀ {A} {x hd : A} {tl} → ¬ x ≡ hd → x ∉ tl
+         → x ∉ (hd ∷ tl)
 
 data _∼_ : (Name × Scope) → (Name × Scope) → Set where
   same-bound : ∀ {a₁ Φ₁ i₁ a₂ Φ₂ i₂}
@@ -131,16 +134,16 @@ data Cut : pδ → Var → (pδ × pδ) → Set where
  
 data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → Set where
   ε  : ∀ {σ xs} → (σ , xs) ⊢ [] ⇒pull (σ , xs)
-  NN : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ p σ₁ xs₁}
+  NN : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ δ σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Present' σ₀ x₂ a₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-       → (σ₀ , xs₀) ⊢ p ⇒pull (σ₁ , xs₁)
-       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ p) ⇒pull (σ₁ , xs₁)
-  NV : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ p σ₁ xs₁}
+       → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
+       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) ⇒pull (σ₁ , xs₁)
+  NV : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ δ σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Absent' σ₀ x₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-       → ((x₂ , a₂) ∷ σ₀ , x₂ ∷ xs₀) ⊢ p ⇒pull (σ₁ , xs₁)
-       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ p) ⇒pull (σ₁ , xs₁)
+       → ((x₂ , a₂) ∷ σ₀ , x₂ ∷ xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
+       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) ⇒pull (σ₁ , xs₁)
 
 data _⊢_⇒δ_ : (Subst' × pδ) → List Var → (Subst' × pδ) → Set where
   εxs  : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)

@@ -45,6 +45,7 @@ postulate
   ⊆tran : ∀ {A} {σ₀ σ₁ σ₂ : List A} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
   ⊆ext : ∀ {A} {hd : A} {σ} → σ ⊆ (hd ∷ σ)
   ∈larger : ∀ {A} {x : A} {s s'} → x ∈ s → s ⊆ s' → x ∈ s'
+  ∉smaller : ∀ {A} {x : A} {s s'} → x ∉ s → s' ⊆ s → x ∉ s'
   ν'≟ : ∀ (a₁ a₂ a₁' a₂' : Name) (Φ₁ Φ₂ Φ₁' Φ₂' : Scope)
        → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
        ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
@@ -151,47 +152,21 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (⊆tran ⊆ext (pullextσ d)) , presentLarger (f refl) (pullextσ d) , NN eq
 
-cutSmaller : ∀ {δ δ₀ δ₁ x} → Cut δ x (δ₀ , δ₁) → δ₀ ⊆ δ × δ₁ ⊆ δ
-cutSmaller = {!!}
-
-cutLemma : ∀ {δ x δ₀ δ₁ eqn} → Cut δ x (δ₀ , δ₁) → eqn ∈ δ₀ → eqn ∉ δ₁
-cutLemma = {!!}
-
-notin : ∀ {σ₀ xs₀ δ σ₁ xs₁ x₁ x₂ Φ₁ Φ₂}
-        → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
-        → (x₁ , Φ₁ , x₂ , Φ₂) ∉ δ → Absent' σ₀ x₁ → Absent' σ₀ x₂
-        → Absent' σ₁ x₁ × Absent' σ₁ x₂
-notin = {!!}
-
-disjoint : ∀ {σ₀ δ₀ x xs xs' σ₁ δ₁ δ₀-with-x}
-           → Cut δ₀ x (δ₁ , δ₀-with-x)
-           → (σ₀ , xs) ⊢ δ₀-with-x ⇒pull (σ₁ , xs')
-           → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀ → Absent' σ₀ x₁ × Absent' σ₀ x₂)
-           → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₁ → Absent' σ₁ x₁ × Absent' σ₁ x₂)
-disjoint c p g x₁ x₂ Φ₁ Φ₂ i
-  with cutSmaller c
-disjoint c p g x₁ x₂ Φ₁ Φ₂ i
-  | sub , _
-  with g x₁ x₂ Φ₁ Φ₂ (∈larger i sub)
-disjoint c p g x₁ x₂ Φ₁ Φ₂ i
-  | _ , _ | nfd₁ , nfd₂ = notin p (cutLemma c i) nfd₁ nfd₂ 
-
 δ✓ : ∀ {σ₀ δ₀ xs σ₁ δ₁ x₁ Φ₁ x₂ Φ₂}
      → (σ₀ , δ₀) ⊢ xs ⇒δ (σ₁ , δ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀
-     → ((x₁ x₂ : Name) → (Φ₁ Φ₂ : Scope) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀ → Absent' σ₀ x₁ × Absent' σ₀ x₂)
      → (∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
-     ⊎ (Absent' σ₁ x₁ × Absent' σ₁ x₂ × δ₁ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂))
-δ✓ εxs i g with g _ _ _ _ i
-δ✓ εxs i g | abs₁ , abs₂ = inj₂ (abs₁ , abs₂ , VV (base i))
-δ✓ εδ () _
-δ✓ {x₁ = x} (pull {x = x'} {xs} c p d) i g
+     ⊎ (δ₁ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂))
+δ✓ εxs i = inj₂ (VV (base i))
+δ✓ εδ ()
+δ✓ {x₁ = x} (pull {x = x'} c p d) i
   with x Nat.≟ x'
-δ✓ {x₁ = x} (pull {x = x'} {xs} c p d) i g
-   | yes eq
+δ✓ {x₁ = x} (pull {x = x'} c p d) i
+    | yes eq
   with inCut c i eq
 ... | x∈δ
   with δ✓' p x∈δ
 ... | a₁ , a₂ , fd₁ , fd₂ , aeq
   = inj₁ (a₁ , a₂ , presentLarger fd₁ (δextσ d) , presentLarger fd₂ (δextσ d) , aeq)
-δ✓ {x₁ = x} (pull {x = x'} {xs} c p d) i g
-   | no neq = δ✓ d (outCut c i neq) (disjoint c p g)
+δ✓ {x₁ = x} (pull {x = x'} c p d) i
+   | no neq = δ✓ d (outCut c i neq)
+
