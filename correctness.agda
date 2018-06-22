@@ -10,22 +10,12 @@ open import Relation.Binary.PropositionalEquality
 open import base
 open import alpha
 
--- data Sub : Term → Subst → Term → Set where
---   name : ∀ {a σ} → Sub (name a) σ (name a)
---   abs  : ∀ {a t t' σ} →  Sub t σ t' → Sub (abs a t) σ (abs a t')
---   comb : ∀ {l r l' r' σ} → Sub l σ l' → Sub r σ r'
---          → Sub (comb l r) σ (comb l r)
---   var  : ∀ {x σ} → Absent σ x → Sub (var x) σ (var x)
---   var' : ∀ {x t t' σ} → Present σ x t → Sub t σ t'
---          → Sub (var x) σ t'
-
--- data Subst2Queue : Subst' → List Var → Set where
-
 data _⊆_ : ∀ {A} → List A → List A → Set where
-  ε : ∀ {A} {ls : List A} → [] ⊆ ls
-  f : ∀ {A} {hd : A} {tl ls} → tl ⊆ ls → hd ∈ ls → (hd ∷ tl) ⊆ ls
+  ε    : ∀ {A} {ls : List A} → [] ⊆ ls
+  here : ∀ {A} {hd : A} {tl ls} → tl ⊆ ls → hd ∈ ls → (hd ∷ tl) ⊆ ls
 
 postulate
+  eqnDec : Decidable {A = (ℕ × Scope × ℕ × Scope)} _≡_
   ν'≟ : ∀ (a₁ a₂ a₁' a₂' : Name) (Φ₁ Φ₂ Φ₁' Φ₂' : Scope)
        → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
        ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
@@ -43,29 +33,34 @@ postulate
   ∉smaller : ∀ {A} {x : A} {s s'} → x ∉ s → s' ⊆ s → x ∉ s'
   presentLarger : ∀ {x a σ σ'} → Present' σ x a → σ ⊆ σ'
                   → Present' σ' x a
-
+  uniq-present : ∀ {σ x a a'} → (p : Present' σ x a) → (p' : Present' σ x a')
+                 → Σ (a ≡ a') (λ aeq → (subst (λ a → Present' σ x a) aeq) p ≡ p')
+  uniq-present' : ∀ {σ σ' x a a'} → σ ⊆ σ' → Present' σ x a → Present' σ' x a'
+                  → a ≡ a'
+  ⊆still : ∀ {A} {hd : A} {σ σ'} → σ ⊆ σ' → hd ∈ σ' → (hd ∷ σ) ⊆ σ'
+  present2∈ : ∀ {σ x a} → Present' σ x a → (x , a) ∈ σ
 
 inRest : ∀ {A} {hd hd' : A} {tl : List A} → ¬ hd ≡ hd' → hd ∈ (hd' ∷ tl) → hd ∈ tl
 inRest nope (this eq) = ⊥-elim (nope eq)
 inRest _ (step _ i)   = i
 
-inCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
-        → Cut δ x (δ-without-x , δ-with-x)
-        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → x₁ ≡ x
-        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-with-x
+inCut : ∀ {x₁ Φ₁ x₂ Φ₂ x χ χ-with-x χ-without-x}
+        → Cut χ x (χ-without-x , χ-with-x)
+        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ → x₁ ≡ x
+        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ-with-x
 inCut ε () eq
 inCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (this {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
   with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-inCut {x₁'} {Φ₁} {x₂} {Φ₂} {x₁'} (this {.x₁'} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
+inCut (this refl c) i refl
    | inj₁ neq = step neq (inCut c (inRest neq i) refl)
-inCut {x₁'} {Φ₁} {x₂} {Φ₂} {x₁'} (this {.x₁'} {x₁'} {Φ₁'} {x₂'} {Φ₂'} refl c) i refl
+inCut (this refl c) i refl
    | inj₂ (_ , refl , refl , refl , refl) = this refl
-inCut {.x} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ₂'} neq c) i refl = inCut c (inRest (diffHead neq) i) refl
+inCut (next neq c) i refl = inCut c (inRest (diffHead neq) i) refl
 
-outCut : ∀ {x₁ Φ₁ x₂ Φ₂ x δ δ-with-x δ-without-x}
-         → Cut δ x (δ-without-x , δ-with-x)
-         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ → ¬ x₁ ≡ x
-         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ-without-x
+outCut : ∀ {x₁ Φ₁ x₂ Φ₂ x χ χ-with-x χ-without-x}
+         → Cut χ x (χ-without-x , χ-with-x)
+         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ → ¬ x₁ ≡ x
+         → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ-without-x
 outCut ε () neq
 outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (this {.x} {.x} {Φ₁'} {x₂'} {Φ₂'} refl c) i nope
   = outCut c (inRest (diffHead nope) i) nope
@@ -81,15 +76,15 @@ outCut {x₁} {Φ₁} {x₂} {Φ₂} {x} (next {.x} {x₁'} {Φ₁'} {x₂'} {Φ
 ν'extσ (NV _ _ d) = ⊆tran ⊆ext (ν'extσ d)
 ν'extσ (NV' _ _  d) = ν'extσ d
 
-pullextσ : ∀ {σ₀ xs₀ δ σ₁ xs₁} → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁) → σ₀ ⊆ σ₁
+pullextσ : ∀ {σ₀ xs₀ χ σ₁ xs₁} → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁) → σ₀ ⊆ σ₁
 pullextσ ε = ⊆refl
 pullextσ (NN _ _ _ d) = pullextσ d
 pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
 
-δextσ : ∀ {σ₀ δ₀ xs σ₁ δ₁} → (σ₀ , δ₀) ⊢ xs ⇒δ (σ₁ , δ₁) → σ₀ ⊆ σ₁
-δextσ εxs = ⊆refl
-δextσ εδ = ⊆refl
-δextσ (pull _ p d) = ⊆tran (pullextσ p) (δextσ d)
+χextσ : ∀ {σ₀ χ₀ xs σ₁ χ₁} → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁) → σ₀ ⊆ σ₁
+χextσ εxs = ⊆refl
+χextσ εχ = ⊆refl
+χextσ (step _ p d) = ⊆tran (pullextσ p) (χextσ d)
 
 ν✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ a₂ Φ₂}
      → σ₀ ⊢ pν ⇒ν σ₁ → (a₁ , Φ₁ , a₂ , Φ₂) ∈ pν
@@ -101,6 +96,33 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
    | inj₁ neq = ν✓ d (inRest neq i)
 ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} eq d) i
    | inj₂ (eq' , _ , _ , _ , _) = NN (replace eq' eq)
+
+∈larger : ∀ {A} {dec : Decidable {A = A} _≡_} {ls ls'} {x : A} → ls' ⊆ ls → x ∈ ls' → x ∈ ls
+∈larger ε ()
+∈larger {dec = dec}{x = x} (here {hd = x'} sub x₁) xinls'
+  with dec x x'
+∈larger {dec = dec} {x = x} (here {hd = x'} sub p) xinls'
+    | yes refl = p
+∈larger {dec = dec} {x = x} (here {hd = x'} sub x₁) xinls'
+    | no ¬p = ∈larger {dec = dec} sub (inRest ¬p xinls')
+
+smaller : ∀ {ls ls'}
+          → ls' ⊆ ls
+          → (g : ℕ → Scope → ℕ → Scope → Set)
+          → (∀ {a b c d} → (a , b , c , d) ∈ ls → g a b c d)
+          → (∀ {a b c d} → (a , b , c , d) ∈ ls' → g a b c d)
+smaller sub g h fd = h (∈larger {dec = eqnDec} sub fd)
+
+✓ν : ∀ {σ₀ pν}
+     → (∀ {a₁ Φ₁ a₂ Φ₂} → (a₁ , Φ₁ , a₂ , Φ₂) ∈ pν → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
+     → ∃ λ σ₁ → σ₀ ⊢ pν ⇒ν σ₁
+✓ν {pν = []} g = _ , ε
+✓ν {σ₀} {pν = x ∷ pν} g
+  with g (this refl)
+✓ν {σ₀} {x ∷ pν'} g
+   | NN eq
+ with ✓ν {σ₀} (smaller ⊆ext (λ a₁ → λ Φ₁ → λ a₂ → λ Φ₂ → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)) g)
+... | σ₁ , d = σ₁ , NN eq d
 
 ν'✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ x₂ Φ₂}
       → σ₀ ⊢ pν ⇒ν' σ₁ → (a₁ , Φ₁ , x₂ , Φ₂) ∈ pν
@@ -121,41 +143,66 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
    | inj₂ (_ , refl , refl , refl , refl)
    = a₂' , presentLarger fd (ν'extσ d) , NN eq
 
-δ✓' : ∀ {x₁ Φ₁ x₂ Φ₂ σ₀ σ₁ δ xs₀ xs₁}
-      → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
-      → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ
+✓ν' : ∀ {σ₀ σ pν}
+      → (∀ {a₁ Φ₁ x₂ Φ₂} → (a₁ , Φ₁ , x₂ , Φ₂) ∈ pν
+         → ∃ λ a₂ → Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
+      → σ₀ ⊆ σ
+      → ∃ λ σ₁ → σ₀ ⊢ pν ⇒ν' σ₁
+✓ν' {pν = []} g sub = _ , ε
+✓ν' {σ₀} {pν = (_ , _ , x₂ , _) ∷ pν} g sub
+ with find?' σ₀ x₂
+✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+    | inj₁ nfd
+ with g (this refl)
+... | a₂ , fd , NN eq
+ with ✓ν' {(x₂ , a₂) ∷ σ₀} {_} {pν} (smaller ⊆ext _ g) (⊆still sub (present2∈ fd))
+... | σ₁ , d = σ₁ , NV nfd eq d
+✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+    | inj₂ (a₂ , fd)
+ with g (this refl)
+... | a₂' , fd' , NN eq
+ with ✓ν' {σ₀} {pν = pν} (smaller ⊆ext _ g) sub
+... | σ₁ , d
+ with uniq-present' sub fd fd'
+✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+    | inj₂ (.a₂' , fd) | a₂' , fd' , NN eq | σ₁ , d | refl
+    = σ₁ , NV' fd eq d
+  
+χ✓' : ∀ {x₁ Φ₁ x₂ Φ₂ σ₀ σ₁ χ xs₀ xs₁}
+      → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
+      → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ
       → ∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)
-δ✓' ε ()
-δ✓' {x₁ = x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ✓' ε ()
+χ✓' {x₁ = x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
   with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-δ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
-   | inj₁ neq = δ✓' d (inRest neq i)
-δ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+   | inj₁ neq = χ✓' d (inRest neq i)
+χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (pullextσ d) , presentLarger fd₂ (pullextσ d) , NN eq
-δ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
+χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
   with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-δ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
-   | inj₁ neq = δ✓' d (inRest neq i)
-δ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
+   | inj₁ neq = χ✓' d (inRest neq i)
+χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (⊆tran ⊆ext (pullextσ d)) , presentLarger (f refl) (pullextσ d) , NN eq
 
-δ✓ : ∀ {σ₀ δ₀ xs σ₁ δ₁ x₁ Φ₁ x₂ Φ₂}
-     → (σ₀ , δ₀) ⊢ xs ⇒δ (σ₁ , δ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ δ₀
+χ✓ : ∀ {σ₀ χ₀ xs σ₁ χ₁ x₁ Φ₁ x₂ Φ₂}
+     → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ₀
      → (∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
-     ⊎ (δ₁ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂))
-δ✓ εxs i = inj₂ (VV (base i))
-δ✓ εδ ()
-δ✓ {x₁ = x} (pull {x = x'} c p d) i
+     ⊎ (χ₁ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂))
+χ✓ εxs i = inj₂ (VV (base i))
+χ✓ εχ ()
+χ✓ {x₁ = x} (step {x = x'} c p d) i
   with x Nat.≟ x'
-δ✓ {x₁ = x} (pull {x = x'} c p d) i
+χ✓ {x₁ = x} (step {x = x'} c p d) i
     | yes eq
   with inCut c i eq
-... | x∈δ
-  with δ✓' p x∈δ
+... | x∈χ
+  with χ✓' p x∈χ
 ... | a₁ , a₂ , fd₁ , fd₂ , aeq
-  = inj₁ (a₁ , a₂ , presentLarger fd₁ (δextσ d) , presentLarger fd₂ (δextσ d) , aeq)
-δ✓ {x₁ = x} (pull {x = x'} c p d) i
-   | no neq = δ✓ d (outCut c i neq)
+  = inj₁ (a₁ , a₂ , presentLarger fd₁ (χextσ d) , presentLarger fd₂ (χextσ d) , aeq)
+χ✓ {x₁ = x} (step {x = x'} c p d) i
+   | no neq = χ✓ d (outCut c i neq)
 
