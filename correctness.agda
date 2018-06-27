@@ -84,15 +84,15 @@ pullextσ (NV x x₃ x₄ d) = ⊆tran ⊆ext (pullextσ d)
 χextσ εχ = ⊆refl
 χextσ (step _ p d) = ⊆tran (pullextσ p) (χextσ d)
 
-ν✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ a₂ Φ₂}
+νsound : ∀ {σ₀ pν σ₁ a₁ Φ₁ a₂ Φ₂}
      → σ₀ ⊢ pν ⇒ν σ₁ → (a₁ , Φ₁ , a₂ , Φ₂) ∈ pν
      → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)
-ν✓ ε ()
-ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ _) i
+νsound ε ()
+νsound {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ _) i
   with ν'≟ a₁ a₂ a₁' a₂' Φ₁ Φ₂ Φ₁' Φ₂'
-ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ d) i
-   | inj₁ neq = ν✓ d (inRest neq i)
-ν✓ {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} eq d) i
+νsound {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} _ d) i
+   | inj₁ neq = νsound d (inRest neq i)
+νsound {a₁ = a₁} {Φ₁} {a₂} {Φ₂} (NN {a₁ = a₁'} {Φ₁'} {a₂'} {Φ₂'} eq d) i
    | inj₂ (eq' , _ , _ , _ , _) = NN (replace eq' eq)
 
 ∈larger : ∀ {A} {dec : Decidable {A = A} _≡_} {ls ls'} {x : A} → ls' ⊆ ls → x ∈ ls' → x ∈ ls
@@ -111,128 +111,128 @@ smaller : ∀ {ls ls'}
           → (∀ {a b c d} → (a , b , c , d) ∈ ls' → g a b c d)
 smaller sub g h fd = h (∈larger {dec = eqnDec} sub fd)
 
-✓ν : ∀ {σ₀ pν}
+νcomplete : ∀ {σ₀ pν}
      → (∀ {a₁ Φ₁ a₂ Φ₂} → (a₁ , Φ₁ , a₂ , Φ₂) ∈ pν → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
      → ∃ λ σ₁ → σ₀ ⊢ pν ⇒ν σ₁
-✓ν {pν = []} g = _ , ε
-✓ν {σ₀} {pν = x ∷ pν} g
+νcomplete {pν = []} g = _ , ε
+νcomplete {σ₀} {pν = x ∷ pν} g
   with g (this refl)
-✓ν {σ₀} {x ∷ pν'} g
+νcomplete {σ₀} {x ∷ pν'} g
    | NN eq
- with ✓ν {σ₀} (smaller ⊆ext (λ a₁ → λ Φ₁ → λ a₂ → λ Φ₂ → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)) g)
+ with νcomplete {σ₀} (smaller ⊆ext (λ a₁ → λ Φ₁ → λ a₂ → λ Φ₂ → [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)) g)
 ... | σ₁ , d = σ₁ , NN eq d
 
-ν'✓ : ∀ {σ₀ pν σ₁ a₁ Φ₁ x₂ Φ₂}
+ν'sound : ∀ {σ₀ pν σ₁ a₁ Φ₁ x₂ Φ₂}
       → σ₀ ⊢ pν ⇒ν' σ₁ → (a₁ , Φ₁ , x₂ , Φ₂) ∈ pν
       → Σ Name λ a₂ → (Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
-ν'✓ ε ()
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ _) i
+ν'sound ε ()
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ _) i
   with ν'≟ a₁ x₂ a₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ d) i
-   | inj₁ neq = ν'✓ d (inRest neq i)
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ eq d) i
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ d) i
+   | inj₁ neq = ν'sound d (inRest neq i)
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₂' , presentLarger (f refl) (ν'extσ d) , NN eq 
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ _) i
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ _) i
   with ν'≟ a₁ x₂ a₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ d) i
-   | inj₁ neq = ν'✓ d (inRest neq i)
-ν'✓ {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} fd eq d) i
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} _ _ d) i
+   | inj₁ neq = ν'sound d (inRest neq i)
+ν'sound {a₁ = a₁} {Φ₁} {x₂} {Φ₂} (NV' {a₁ = a₁'} {Φ₁'} {x₂'} {a₂'} {Φ₂'} fd eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₂' , presentLarger fd (ν'extσ d) , NN eq
 
-✓ν' : ∀ {σ₀ σ pν}
+ν'complete : ∀ {σ₀ σ pν}
       → (∀ {a₁ Φ₁ x₂ Φ₂} → (a₁ , Φ₁ , x₂ , Φ₂) ∈ pν
          → ∃ λ a₂ → Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
       → σ₀ ⊆ σ
       → ∃ λ σ₁ → σ₀ ⊢ pν ⇒ν' σ₁
-✓ν' {pν = []} g sub = _ , ε
-✓ν' {σ₀} {pν = (_ , _ , x₂ , _) ∷ pν} g sub
+ν'complete {pν = []} g sub = _ , ε
+ν'complete {σ₀} {pν = (_ , _ , x₂ , _) ∷ pν} g sub
  with find?' σ₀ x₂
-✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+ν'complete {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
     | inj₁ nfd
  with g (this refl)
 ... | a₂ , fd , NN eq
- with ✓ν' {(x₂ , a₂) ∷ σ₀} {_} {pν} (smaller ⊆ext _ g) (⊆still sub (present2∈ fd))
+ with ν'complete {(x₂ , a₂) ∷ σ₀} {_} {pν} (smaller ⊆ext _ g) (⊆still sub (present2∈ fd))
 ... | σ₁ , d = σ₁ , NV nfd eq d
-✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+ν'complete {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
     | inj₂ (a₂ , fd)
  with g (this refl)
 ... | a₂' , fd' , NN eq
- with ✓ν' {σ₀} {pν = pν} (smaller ⊆ext _ g) sub
+ with ν'complete {σ₀} {pν = pν} (smaller ⊆ext _ g) sub
 ... | σ₁ , d
  with uniq-present' sub fd fd'
-✓ν' {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
+ν'complete {σ₀} {_} {(_ , _ , x₂ , _) ∷ pν} g sub
     | inj₂ (.a₂' , fd) | a₂' , fd' , NN eq | σ₁ , d | refl
     = σ₁ , NV' fd eq d
   
-χ✓' : ∀ {x₁ Φ₁ x₂ Φ₂ σ₀ σ₁ χ xs₀ xs₁}
+χ'sound : ∀ {x₁ Φ₁ x₂ Φ₂ σ₀ σ₁ χ xs₀ xs₁}
       → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
       → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ
       → ∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂)
-χ✓' ε ()
-χ✓' {x₁ = x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ'sound ε ()
+χ'sound {x₁ = x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
   with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
-   | inj₁ neq = χ✓' d (inRest neq i)
-χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ'sound {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+   | inj₁ neq = χ'sound d (inRest neq i)
+χ'sound {x₁} {Φ₁} {x₂} {Φ₂} (NN {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (pullextσ d) , presentLarger fd₂ (pullextσ d) , NN eq
-χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
+χ'sound {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
   with ν'≟ x₁ x₂ x₁' x₂' Φ₁ Φ₂ Φ₁' Φ₂'
-χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
-   | inj₁ neq = χ✓' d (inRest neq i)
-χ✓' {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
+χ'sound {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} x x₅ x₆ d) i
+   | inj₁ neq = χ'sound d (inRest neq i)
+χ'sound {x₁} {Φ₁} {x₂} {Φ₂} (NV {x₁ = x₁'} {Φ₁'} {a₁'} {x₂'} {Φ₂'} {a₂'} fd₁ fd₂ eq d) i
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (⊆tran ⊆ext (pullextσ d)) , presentLarger (f refl) (pullextσ d) , NN eq
 
-✓χ' : ∀ {σ₀ σ xs₀ χ}
+χ'complete : ∀ {σ₀ σ xs₀ χ}
       → (∀ {x₁ Φ₁ x₂ Φ₂} → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ
          → ∃ λ a₁ → ∃ λ a₂ → Present' σ₀ x₁ a₁ × Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
       → σ₀ ⊆ σ
       → ∃ λ σ₁ → ∃ λ xs₁ → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
-✓χ' {χ = []} g sub = _ , _ , ε
-✓χ' {σ₀} {σ} {χ = (_ , _ , x₂ , _) ∷ χ} g sub
+χ'complete {χ = []} g sub = _ , _ , ε
+χ'complete {σ₀} {σ} {χ = (_ , _ , x₂ , _) ∷ χ} g sub
   with find?' σ₀ x₂ 
-✓χ' {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
+χ'complete {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
     | inj₁ nfd
   with g (this refl)
 ... | a₁ , a₂ , fd₁ , fd₂ , NN eq
-  with ✓χ' {σ₀ = (x₂ , a₂) ∷ σ₀} {σ} {χ = χ} {!!} (⊆still sub (present2∈ fd₂))
+  with χ'complete {σ₀ = (x₂ , a₂) ∷ σ₀} {σ} {χ = χ} {!!} (⊆still sub (present2∈ fd₂))
 ... | σ₁ , xs₁ , p = σ₁ , xs₁ , NV fd₁ nfd eq p
-✓χ' {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
+χ'complete {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
     | inj₂ (a₂' , fd₂')
   with g (this refl)
 ... | a₁ , a₂ , fd₁ , fd₂ , NN eq
-  with ✓χ' {σ₀ = σ₀} {σ} {χ = χ} (smaller ⊆ext _ g) sub
+  with χ'complete {σ₀ = σ₀} {σ} {χ = χ} (smaller ⊆ext _ g) sub
 ... | σ₁ , xs₁ , p
   with uniq-present' sub fd₂' fd₂
 ... | refl = σ₁ , xs₁ , NN fd₁ fd₂' eq p
 
-χ✓ : ∀ {σ₀ χ₀ xs σ₁ χ₁ x₁ Φ₁ x₂ Φ₂}
+χsound : ∀ {σ₀ χ₀ xs σ₁ χ₁ x₁ Φ₁ x₂ Φ₂}
      → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ₀
      → (∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
      ⊎ (χ₁ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂))
-χ✓ εxs i = inj₂ (VV (base i))
-χ✓ εχ ()
-χ✓ {x₁ = x} (step {x = x'} c p d) i
+χsound εxs i = inj₂ (VV (base i))
+χsound εχ ()
+χsound {x₁ = x} (step {x = x'} c p d) i
   with x Nat.≟ x'
-χ✓ {x₁ = x} (step {x = x'} c p d) i
+χsound {x₁ = x} (step {x = x'} c p d) i
     | yes eq
   with inCut c i eq
 ... | x∈χ
-  with χ✓' p x∈χ
+  with χ'sound p x∈χ
 ... | a₁ , a₂ , fd₁ , fd₂ , aeq
   = inj₁ (a₁ , a₂ , presentLarger fd₁ (χextσ d) , presentLarger fd₂ (χextσ d) , aeq)
-χ✓ {x₁ = x} (step {x = x'} c p d) i
-   | no neq = χ✓ d (outCut c i neq)
+χsound {x₁ = x} (step {x = x'} c p d) i
+   | no neq = χsound d (outCut c i neq)
 
-✓χ : ∀ {σ₀ χ₀ xs σ}
+χcomplete : ∀ {σ₀ χ₀ xs σ}
      → (∀ {x₁ Φ₁ x₂ Φ₂}
        → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ₀
        → (∃ λ a₁ → ∃ λ a₂ → Present' σ x₁ a₁ × Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
           ⊎ (χ₀ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂)))
      → σ₀ ⊆ σ
      → ∃ λ σ₁ → ∃ λ χ₁ → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁)
-✓χ g sub = {!!}
+χcomplete g sub = {!!}
 
