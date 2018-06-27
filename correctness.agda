@@ -17,27 +17,25 @@ data _⊆_ : ∀ {A} → List A → List A → Set where
 postulate
   eqnDec : Decidable {A = (ℕ × Scope × ℕ × Scope)} _≡_
   ν'≟ : ∀ (a₁ a₂ a₁' a₂' : Name) (Φ₁ Φ₂ Φ₁' Φ₂' : Scope)
-       → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
-       ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
-         × a₁ ≡ a₁' × Φ₁ ≡ Φ₁' × a₂ ≡ a₂' × Φ₂ ≡ Φ₂'
+        → ¬ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
+        ⊎ (a₁ , Φ₁ , a₂ , Φ₂) ≡ (a₁' , Φ₁' , a₂' , Φ₂')
+          × a₁ ≡ a₁' × Φ₁ ≡ Φ₁' × a₂ ≡ a₂' × Φ₂ ≡ Φ₂'
   diffHead : ∀ {x₁ x₂ x₁' x₂' : Name} {Φ₁ Φ₂ Φ₁' Φ₂' : Scope}
              → ¬ x₁ ≡ x₁'
              → ¬ (x₁ , Φ₁ , x₂ , Φ₂) ≡ (x₁' , Φ₁' , x₂' , Φ₂')
   replace : ∀ {a₁ Φ₁ a₂ Φ₂ a₁' Φ₁' a₂' Φ₂'}
-          → (a₁' , Φ₁' , a₂' , Φ₂') ≡ (a₁ , Φ₁ , a₂ , Φ₂)
-          → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-          → (a₁' , Φ₁') ∼ (a₂' , Φ₂')
+            → (a₁' , Φ₁' , a₂' , Φ₂') ≡ (a₁ , Φ₁ , a₂ , Φ₂)
+            → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
+            → (a₁' , Φ₁') ∼ (a₂' , Φ₂')
+  ⊆refl : ∀ {A} {σ : List A} → σ ⊆ σ
   ⊆tran : ∀ {A} {σ₀ σ₁ σ₂ : List A} → σ₀ ⊆ σ₁ → σ₁ ⊆ σ₂ → σ₀ ⊆ σ₂
   ⊆ext : ∀ {A} {x : A} {σ} → σ ⊆ (x ∷ σ)
-  ⊆refl : ∀ {A} {σ : List A} → σ ⊆ σ
+  ⊆still : ∀ {A} {hd : A} {σ σ'} → σ ⊆ σ' → hd ∈ σ' → (hd ∷ σ) ⊆ σ'
   ∉smaller : ∀ {A} {x : A} {s s'} → x ∉ s → s' ⊆ s → x ∉ s'
   presentLarger : ∀ {x a σ σ'} → Present' σ x a → σ ⊆ σ'
                   → Present' σ' x a
-  uniq-present : ∀ {σ x a a'} → (p : Present' σ x a) → (p' : Present' σ x a')
-                 → Σ (a ≡ a') (λ aeq → (subst (λ a → Present' σ x a) aeq) p ≡ p')
   uniq-present' : ∀ {σ σ' x a a'} → σ ⊆ σ' → Present' σ x a → Present' σ' x a'
                   → a ≡ a'
-  ⊆still : ∀ {A} {hd : A} {σ σ'} → σ ⊆ σ' → hd ∈ σ' → (hd ∷ σ) ⊆ σ'
   present2∈ : ∀ {σ x a} → Present' σ x a → (x , a) ∈ σ
 
 inRest : ∀ {A} {hd hd' : A} {tl : List A} → ¬ hd ≡ hd' → hd ∈ (hd' ∷ tl) → hd ∈ tl
@@ -188,6 +186,29 @@ smaller sub g h fd = h (∈larger {dec = eqnDec} sub fd)
    | inj₂ (_ , refl , refl , refl , refl)
    = a₁' , a₂' , presentLarger fd₁ (⊆tran ⊆ext (pullextσ d)) , presentLarger (f refl) (pullextσ d) , NN eq
 
+✓χ' : ∀ {σ₀ σ xs₀ χ}
+      → (∀ {x₁ Φ₁ x₂ Φ₂} → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ
+         → ∃ λ a₁ → ∃ λ a₂ → Present' σ₀ x₁ a₁ × Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
+      → σ₀ ⊆ σ
+      → ∃ λ σ₁ → ∃ λ xs₁ → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
+✓χ' {χ = []} g sub = _ , _ , ε
+✓χ' {σ₀} {σ} {χ = (_ , _ , x₂ , _) ∷ χ} g sub
+  with find?' σ₀ x₂ 
+✓χ' {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
+    | inj₁ nfd
+  with g (this refl)
+... | a₁ , a₂ , fd₁ , fd₂ , NN eq
+  with ✓χ' {σ₀ = (x₂ , a₂) ∷ σ₀} {σ} {χ = χ} {!!} (⊆still sub (present2∈ fd₂))
+... | σ₁ , xs₁ , p = σ₁ , xs₁ , NV fd₁ nfd eq p
+✓χ' {σ₀} {σ} {xs₀ = _} {(_ , _ , x₂ , _) ∷ χ} g sub
+    | inj₂ (a₂' , fd₂')
+  with g (this refl)
+... | a₁ , a₂ , fd₁ , fd₂ , NN eq
+  with ✓χ' {σ₀ = σ₀} {σ} {χ = χ} (smaller ⊆ext _ g) sub
+... | σ₁ , xs₁ , p
+  with uniq-present' sub fd₂' fd₂
+... | refl = σ₁ , xs₁ , NN fd₁ fd₂' eq p
+
 χ✓ : ∀ {σ₀ χ₀ xs σ₁ χ₁ x₁ Φ₁ x₂ Φ₂}
      → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁) → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ₀
      → (∃ λ a₁ → ∃ λ a₂ → Present' σ₁ x₁ a₁ × Present' σ₁ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
@@ -205,4 +226,13 @@ smaller sub g h fd = h (∈larger {dec = eqnDec} sub fd)
   = inj₁ (a₁ , a₂ , presentLarger fd₁ (χextσ d) , presentLarger fd₂ (χextσ d) , aeq)
 χ✓ {x₁ = x} (step {x = x'} c p d) i
    | no neq = χ✓ d (outCut c i neq)
+
+✓χ : ∀ {σ₀ χ₀ xs σ}
+     → (∀ {x₁ Φ₁ x₂ Φ₂}
+       → (x₁ , Φ₁ , x₂ , Φ₂) ∈ χ₀
+       → (∃ λ a₁ → ∃ λ a₂ → Present' σ x₁ a₁ × Present' σ x₂ a₂ × [] ⊢ (name a₁ , Φ₁) ≈ (name a₂ , Φ₂))
+          ⊎ (χ₀ ⊢ (var x₁ , Φ₁) ≈ (var x₂ , Φ₂)))
+     → σ₀ ⊆ σ
+     → ∃ λ σ₁ → ∃ λ χ₁ → (σ₀ , χ₀) ⊢ xs ⇒χ (σ₁ , χ₁)
+✓χ g sub = {!!}
 

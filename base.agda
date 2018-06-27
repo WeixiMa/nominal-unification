@@ -77,7 +77,7 @@ data Subst'2Subst : Subst' → Subst → Set where
 
 pν  = List (Name × Scope × Name × Scope)
 pν' = List (Name × Scope × Var × Scope)
-pδ  = List (Var × Scope × Var × Scope)
+pχ  = List (Var × Scope × Var × Scope)
 
 data _∈_ : ∀ {A} → A → List A → Set where
   this : ∀ {A} {hd hd' : A} {tl : List A}
@@ -119,96 +119,96 @@ data _⊢_⇒ν'_ : Subst' → pν' → Subst' → Set where
         → σ₀ ⊢ p ⇒ν' σ₁
         → σ₀ ⊢ (a₁ , Φ₁ , x₂ , Φ₂) ∷ p ⇒ν' σ₁
 
-data Cut : pδ → Var → (pδ × pδ) → Set where
+data Cut : pχ → Var → (pχ × pχ) → Set where
   ε    : ∀ {x} → Cut [] x ([] , [])
-  this : ∀ {x x₁ Φ₁ x₂ Φ₂ δ δ-with-x δ-without-x}
+  this : ∀ {x x₁ Φ₁ x₂ Φ₂ χ χ-with-x χ-without-x}
          → x ≡ x₁
-         → Cut δ x (δ-without-x , δ-with-x)
-         → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) x
-               (δ-without-x , (x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-with-x)
-  next : ∀ {x x₁ Φ₁ x₂ Φ₂ δ δ-with-x δ-without-x}
+         → Cut χ x (χ-without-x , χ-with-x)
+         → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ χ) x
+               (χ-without-x , (x₁ , Φ₁ , x₂ , Φ₂) ∷ χ-with-x)
+  next : ∀ {x x₁ Φ₁ x₂ Φ₂ χ χ-with-x χ-without-x}
          → ¬ x ≡ x₁
-         → Cut δ x (δ-without-x , δ-with-x)
-         → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) x
-               ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ-without-x , δ-with-x)
+         → Cut χ x (χ-without-x , χ-with-x)
+         → Cut ((x₁ , Φ₁ , x₂ , Φ₂) ∷ χ) x
+               ((x₁ , Φ₁ , x₂ , Φ₂) ∷ χ-without-x , χ-with-x)
  
-data _⊢_⇒pull_ : (Subst' × List Var) → pδ → (Subst' × List Var) → Set where
+data _⊢_⇒pull_ : (Subst' × List Var) → pχ → (Subst' × List Var) → Set where
   ε  : ∀ {σ xs} → (σ , xs) ⊢ [] ⇒pull (σ , xs)
-  NN : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ δ σ₁ xs₁}
+  NN : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ χ σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Present' σ₀ x₂ a₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-       → (σ₀ , xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
-       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) ⇒pull (σ₁ , xs₁)
-  NV : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ δ σ₁ xs₁}
+       → (σ₀ , xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
+       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ χ) ⇒pull (σ₁ , xs₁)
+  NV : ∀ {σ₀ xs₀ x₁ Φ₁ a₁ x₂ Φ₂ a₂ χ σ₁ xs₁}
        → Present' σ₀ x₁ a₁ → Absent' σ₀ x₂
        → (a₁ , Φ₁) ∼ (a₂ , Φ₂)
-       → ((x₂ , a₂) ∷ σ₀ , x₂ ∷ xs₀) ⊢ δ ⇒pull (σ₁ , xs₁)
-       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ δ) ⇒pull (σ₁ , xs₁)
+       → ((x₂ , a₂) ∷ σ₀ , x₂ ∷ xs₀) ⊢ χ ⇒pull (σ₁ , xs₁)
+       → (σ₀ , xs₀) ⊢ ((x₁ , Φ₁ , x₂ , Φ₂) ∷ χ) ⇒pull (σ₁ , xs₁)
 
-data _⊢_⇒δ_ : (Subst' × pδ) → List Var → (Subst' × pδ) → Set where
-  εxs  : ∀ {σ δ} → (σ , δ) ⊢ [] ⇒δ (σ , δ)
-  εδ   : ∀ {σ xs} → (σ , []) ⊢ xs ⇒δ (σ , [])
-  pull : ∀ {σ₀ δ₀ x xs σ₀' δ₀' pδ-of-x xs' σ₁ δ₁}
-         → Cut δ₀ x (δ₀' , pδ-of-x)
-         → (σ₀ , xs) ⊢ pδ-of-x ⇒pull (σ₀' , xs')
-         → (σ₀' , δ₀') ⊢ xs' ⇒δ (σ₁ , δ₁)
-         → (σ₀ , δ₀) ⊢ (x ∷ xs) ⇒δ (σ₁ , δ₁)
+data _⊢_⇒χ_ : (Subst' × pχ) → List Var → (Subst' × pχ) → Set where
+  εxs  : ∀ {σ χ} → (σ , χ) ⊢ [] ⇒χ (σ , χ)
+  εχ   : ∀ {σ xs} → (σ , []) ⊢ xs ⇒χ (σ , [])
+  step : ∀ {σ₀ χ₀ x xs σ₀' χ₀' pχ-of-x xs' σ₁ χ₁}
+         → Cut χ₀ x (χ₀' , pχ-of-x)
+         → (σ₀ , xs) ⊢ pχ-of-x ⇒pull (σ₀' , xs')
+         → (σ₀' , χ₀') ⊢ xs' ⇒χ (σ₁ , χ₁)
+         → (σ₀ , χ₀) ⊢ (x ∷ xs) ⇒χ (σ₁ , χ₁)
 
-data _⊢_⇒s_ : (pν × pν' × pδ × Subst) → (Term × Scope × Term × Scope)
-              → (pν × pν' × pδ × Subst) → Set where
-  NN   : ∀ {p₀ p₀' δ₀ σ₀ a₁ Φ₁ a₂ Φ₂} 
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (name a₁ , Φ₁ , name a₂ , Φ₂) ⇒s
-           ((a₁ , Φ₁ , a₂ , Φ₂) ∷ p₀ , p₀' , δ₀ , σ₀)
-  NV   : ∀ {p₀ p₀' δ₀ σ₀ a₁ Φ₁ x₂ Φ₂} 
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (name a₁ , Φ₁ , var x₂ , Φ₂) ⇒s
-           (p₀ , (a₁ , Φ₁ , x₂ , Φ₂) ∷ p₀' , δ₀ , σ₀)
-  VV   : ∀ {p₀ p₀' δ₀ σ₀ x₁ Φ₁ x₂ Φ₂} 
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , var x₂ , Φ₂) ⇒s
-           (p₀ , p₀' , (x₁ , Φ₁ , x₂ , Φ₂) ∷ δ₀ , σ₀)
-  CC   : ∀ {p₀ p₀' δ₀ σ₀ l₁ r₁ Φ₁ l₂ r₂ Φ₂ p p' δ σ p₁ p₁' δ₁ σ₁}
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (l₁ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , δ , σ)
-         → (p , p' , δ , σ) ⊢ (r₁ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (comb l₁ r₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s
-           (p₁ , p₁' , δ₁ , σ₁)
-  AA   : ∀ {p₀ p₀' δ₀ σ₀ a₁ t₁ Φ₁ a₂ t₂ Φ₂ p₁ p₁' δ₁ σ₁}
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (t₁ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (abs a₁ t₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-  VC   : ∀ {p₀ p₀' δ₀ σ₀ x₁ xₗ xᵣ Φ₁ l₂ r₂ Φ₂ p p' δ σ p₁ p₁' δ₁ σ₁}
+data _⊢_⇒s_ : (pν × pν' × pχ × Subst) → (Term × Scope × Term × Scope)
+              → (pν × pν' × pχ × Subst) → Set where
+  NN   : ∀ {p₀ p₀' χ₀ σ₀ a₁ Φ₁ a₂ Φ₂} 
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (name a₁ , Φ₁ , name a₂ , Φ₂) ⇒s
+           ((a₁ , Φ₁ , a₂ , Φ₂) ∷ p₀ , p₀' , χ₀ , σ₀)
+  NV   : ∀ {p₀ p₀' χ₀ σ₀ a₁ Φ₁ x₂ Φ₂} 
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (name a₁ , Φ₁ , var x₂ , Φ₂) ⇒s
+           (p₀ , (a₁ , Φ₁ , x₂ , Φ₂) ∷ p₀' , χ₀ , σ₀)
+  VV   : ∀ {p₀ p₀' χ₀ σ₀ x₁ Φ₁ x₂ Φ₂} 
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , var x₂ , Φ₂) ⇒s
+           (p₀ , p₀' , (x₁ , Φ₁ , x₂ , Φ₂) ∷ χ₀ , σ₀)
+  CC   : ∀ {p₀ p₀' χ₀ σ₀ l₁ r₁ Φ₁ l₂ r₂ Φ₂ p p' χ σ p₁ p₁' χ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (l₁ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , χ , σ)
+         → (p , p' , χ , σ) ⊢ (r₁ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (comb l₁ r₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s
+           (p₁ , p₁' , χ₁ , σ₁)
+  AA   : ∀ {p₀ p₀' χ₀ σ₀ a₁ t₁ Φ₁ a₂ t₂ Φ₂ p₁ p₁' χ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (t₁ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (abs a₁ t₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+  VC   : ∀ {p₀ p₀' χ₀ σ₀ x₁ xₗ xᵣ Φ₁ l₂ r₂ Φ₂ p p' χ σ p₁ p₁' χ₁ σ₁}
          → Absent σ₀ x₁
-         → (p₀ , p₀' , δ₀ , (x₁ , (comb (var xₗ) (var xᵣ))) ∷ σ₀)
-           ⊢ (var xₗ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , δ , σ)
-         → (p , p' , δ , σ) ⊢ (var xᵣ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-  VC'  : ∀ {p₀ p₀' δ₀ σ₀ x₁ tₗ tᵣ Φ₁ l₂ r₂ Φ₂ p p' δ σ p₁ p₁' δ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , (x₁ , (comb (var xₗ) (var xᵣ))) ∷ σ₀)
+           ⊢ (var xₗ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , χ , σ)
+         → (p , p' , χ , σ) ⊢ (var xᵣ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+  VC'  : ∀ {p₀ p₀' χ₀ σ₀ x₁ tₗ tᵣ Φ₁ l₂ r₂ Φ₂ p p' χ σ p₁ p₁' χ₁ σ₁}
          → Present σ₀ x₁ (comb tₗ tᵣ)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (tₗ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , δ , σ)
-         → (p , p' , δ , σ) ⊢ (tᵣ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-  VA   : ∀ {p₀ p₀' δ₀ σ₀ x₁ a₁ xₜ Φ₁ a₂ i t₂ Φ₂ p₁ p₁' δ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (tₗ , Φ₁ , l₂ , Φ₂) ⇒s (p , p' , χ , σ)
+         → (p , p' , χ , σ) ⊢ (tᵣ , Φ₁ , r₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , comb l₂ r₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+  VA   : ∀ {p₀ p₀' χ₀ σ₀ x₁ a₁ xₜ Φ₁ a₂ i t₂ Φ₂ p₁ p₁' χ₁ σ₁}
          → Absent σ₀ x₁
          → Bd Φ₁ a₁ i → Bd Φ₂ a₂ i
-         → (p₀ , p₀' , δ₀ , (x₁ , (abs a₁ (var xₜ))) ∷ σ₀)
-           ⊢ (var xₜ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-  VA'  : ∀ {p₀ p₀' δ₀ σ₀ x₁ a₁ xₜ Φ₁ a₂ t₂ Φ₂ p₁ p₁' δ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , (x₁ , (abs a₁ (var xₜ))) ∷ σ₀)
+           ⊢ (var xₜ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+  VA'  : ∀ {p₀ p₀' χ₀ σ₀ x₁ a₁ xₜ Φ₁ a₂ t₂ Φ₂ p₁ p₁' χ₁ σ₁}
          → Absent σ₀ x₁
          → Fr Φ₁ a₁ → Fr Φ₂ a₂
-         → (p₀ , p₀' , δ₀ , (x₁ , (abs a₁ (var xₜ))) ∷ σ₀)
-           ⊢ (var xₜ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-  VA'' : ∀ {p₀ p₀' δ₀ σ₀ x₁ a₁ t₁ Φ₁ a₂ t₂ Φ₂ p₁ p₁' δ₁ σ₁}
+         → (p₀ , p₀' , χ₀ , (x₁ , (abs a₁ (var xₜ))) ∷ σ₀)
+           ⊢ (var xₜ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+  VA'' : ∀ {p₀ p₀' χ₀ σ₀ x₁ a₁ t₁ Φ₁ a₂ t₂ Φ₂ p₁ p₁' χ₁ σ₁}
          → Present σ₀ x₁ (abs a₁ t₁)
-         → (p₀ , p₀' , δ₀ , σ₀)
-           ⊢ (t₁ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
-         → (p₀ , p₀' , δ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , δ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀)
+           ⊢ (t₁ , a₁ ∷ Φ₁ , t₂ , a₂ ∷ Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
+         → (p₀ , p₀' , χ₀ , σ₀) ⊢ (var x₁ , Φ₁ , abs a₂ t₂ , Φ₂) ⇒s (p₁ , p₁' , χ₁ , σ₁)
 
-data _⊢_⇒ρ_ : (pν × pν' × pδ × Subst) → List (Term × Scope × Term × Scope)
-              → (pν × pν' × pδ × Subst) → Set where
-  ε : ∀ {p δ σ} → (p , δ , σ) ⊢ [] ⇒ρ (p , δ , σ)
-  s : ∀ {p₀ p₀' δ₀ σ₀ e es p p' δ σ p₁ p₁' δ₁ σ₁}
-      → (p₀ , p₀' , δ₀ , σ₀) ⊢ e ⇒s (p , p' , δ , σ)
-      → (p , p' , δ , σ) ⊢ es ⇒ρ (p₁ , p₁' , δ₁ , σ₁)
-      → (p₀ , p₀' , δ₀ , σ₀) ⊢ (e ∷ es) ⇒ρ (p₁ , p₁' , δ₁ , σ₁)
+data _⊢_⇒ρ_ : (pν × pν' × pχ × Subst) → List (Term × Scope × Term × Scope)
+              → (pν × pν' × pχ × Subst) → Set where
+  ε : ∀ {p χ σ} → (p , χ , σ) ⊢ [] ⇒ρ (p , χ , σ)
+  s : ∀ {p₀ p₀' χ₀ σ₀ e es p p' χ σ p₁ p₁' χ₁ σ₁}
+      → (p₀ , p₀' , χ₀ , σ₀) ⊢ e ⇒s (p , p' , χ , σ)
+      → (p , p' , χ , σ) ⊢ es ⇒ρ (p₁ , p₁' , χ₁ , σ₁)
+      → (p₀ , p₀' , χ₀ , σ₀) ⊢ (e ∷ es) ⇒ρ (p₁ , p₁' , χ₁ , σ₁)
 
 uniq-free : ∀ {Φ a} → (x : Fr Φ a) → (y : Fr Φ a) → x ≡ y
 uniq-free ε ε                                 = refl
